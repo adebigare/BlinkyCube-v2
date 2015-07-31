@@ -1,0 +1,354 @@
+<html>
+
+<head>
+    <link rel="icon" href="#" type="image/x-icon"/>
+    <style>
+    body {
+        font-size: 16px;
+    }
+
+    h1, h2, h3, h4, h5, h6, p, a, input, textarea, keygen, select, button {
+        font-family: 'Lora', Georgia, serif;
+        color: darkgray;
+        margin: auto;
+    }
+
+    p {
+        padding: 0.25em;
+    }
+
+    button {
+        flex-grow: 1;
+        font-size: 1.2em;
+        text-transform: uppercase;
+        border: 0;
+        padding: 0.75em 1.5em;
+        border-radius: 2px;
+        -moz-border-radius: 2px;
+        -typekit-border-radius: 2px;
+        background-color: lightgoldenrodyellow;
+    }
+
+    .color {
+        height: 50px;
+        width: 50px;
+    }
+
+    #colors {
+        margin-left: 0.5em;
+    }
+
+    #content {
+        margin: 0 auto;
+        max-width: 900px;
+    }
+
+    #container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: center;
+    }
+    #canvas {
+        border: 1px dotted grey;
+         align-self: flex-end;
+    }
+
+    #controls {
+    }
+
+    #introduction {
+        margin: 0 auto 0.75em;
+        text-align: center;
+        line-height: 1.2em;
+        padding: 0.75em;
+        max-width: 600px;
+    }
+
+    #introduction > h1 {
+        line-height: 1.25em;
+    }
+
+    #alertbox {
+        visibility: hidden;
+    }
+
+    </style>
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic' rel='stylesheet' type='text/css'>
+    <!--<script type="text/javascript" src="jscolor/jscolor.js"></script> -->
+    <script src="https://code.jquery.com/jquery-2.1.1.min.js"> </script>
+</head>
+
+<body>
+    <div id="content">
+        <div id="introduction">
+            <h1>Adrienne's Magnificent Blinky Drawing Cube!</h1>
+            <p>Through amazing internet magic, you can draw on this page and see your drawing ON THE BLINKY CUBE! (Amazing right? I know!)</p>    
+        </div>
+        <div id="container">
+            <div id="controls">
+                <button id="playButton" type="button">Play</button>
+                <button id="recButton" type="button" value="Record">Record</button>
+                <button id="clearButton" type="button">Clear</button>
+                <button id="sendButton" type="button">Send to the Cube!</button>
+                <div id="paintBuckets"></div>
+            </div>
+<!--             <div id="colors">
+                <p> Pick some colors!</p>
+                <input class="color" id="colorOne"></input>
+                <input class="color" id="colorTwo"></input>
+                <input class="color" id="colorThree"></input>
+            </div>
+ -->            <div id="alertbox"><p>You haven't made a recording yet! Click Record to start.</p></div>
+            <canvas id="canvas" width="600" height="600"></canvas>
+        </div>
+    </div>
+    <canvas id="testingCanvas" width="100" height="100" style="border:1px dotted grey;"></canvas>
+        
+    </div>
+
+<script>
+    var clearButton = document.getElementById('clearButton');
+    var cnv = document.getElementById('canvas'); 
+    var context = cnv.getContext('2d');
+    var width = parseInt(cnv.getAttribute('width'), 10);
+    var height = parseInt(cnv.getAttribute('height'), 10);
+    var circles =[];
+    var start = 0; 
+    var recording = false;
+    var drawing = false; 
+    //recording vars
+    var pointsAndTimes = [];
+
+    // set up a global variable where we'll store a dictionary of mousePosition coordinates, starting out as null — you can read more about null at https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/null
+    var mousePosition = { 
+            'x': null,
+            'y': null
+        };
+
+    //To be continued, get color from jscolor picker divs    
+//     var getColor = function() {
+//        var colorOne = document.getElementById('colorOne')
+//        colorOne.style.backgroundColor  ='#'+this.color;
+//        // colorOne.fromString();
+// //         console.log(colorOne);
+//     }
+
+    // Pick a color for the paint buckets or elsewhere
+    var pickColor = function() {
+                        var red = Math.floor(Math.random() * 255);
+                        var green = Math.floor(Math.random() * 255);
+                        var blue = Math.floor(Math.random() * 255);
+                        return "rgb(" + red + "," + green + "," + blue + ")";
+                    }
+
+    // Update our mousePosition with the information from the event we pass, you can read more about mouseEvents at https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent
+    var updateMousePosition = function(event) { 
+        mousePosition.x = event.offsetX; //event.clientX ; // - cnv.offsetLeft;
+        mousePosition.y = event.offsetY; //- event.offsetY; // - cnv.offsetTop;
+    };
+
+    function circle (x,y) { 
+        context.beginPath();
+        context.arc(x,y, 20, 0*Math.PI,2*Math.PI);
+        context.closePath();
+        context.fillStyle = pickColor();
+        context.fill();
+    }
+
+    function draw() {
+        // Styles the window and brush
+        context.translate(0.5,0.5);
+        context.strokeStyle = pickColor();
+        context.lineWidth = 20;
+        context.lineCap = context.lineJoin ='round';      
+    }
+    draw();
+
+    // Handles the drawing
+    cnv.addEventListener('mousedown', function(event) {
+        pickColor();
+        drawing = true;
+        // update our mousePosition dictionary
+        updateMousePosition(event); 
+        // Get pixel color data on the mouse position
+        var imgData = context.getImageData(mousePosition.x,mousePosition.y, 1, 1).data;
+        // If the pixel has color data, change the brush/stroke color to that color
+        if (imgData[0] && imgData[1] && imgData[2] && imgData[3] != 0) {
+            context.strokeStyle = 'rgb(' + imgData[0] + ',' + imgData[1] + ','+ imgData[2] + ')';
+        }
+        
+    });
+
+    //Stops drawing
+    cnv.addEventListener('mouseup', function() {
+        // When we mouseup on the square, toggle drawingSquare to false
+        drawing = false;
+    });
+
+    //record user's drawing
+    recButton.addEventListener('mousedown', function(){
+        if (this.value == "Record") {
+            recording = true;
+            this.value = "Stop"; 
+            this.innerHTML = "Stop";
+        } else {
+            recording = false;
+            this.value = "Record";
+            this.innerHTML = "Record";
+        }
+
+        if (document.getElementById("alertbox").style.visibility == "visible") {
+            document.getElementById("alertbox").style.visibility = "hidden";
+        }
+        // if (pointsAndTimes.length > 1) {
+        //     pointsAndTimes = [];
+        // }
+
+    });
+
+    // Handles all that sweet brush action
+    cnv.addEventListener('mousemove', function(event) { 
+        
+        if (!drawing) {
+            return;
+        }
+
+        context.beginPath(mousePosition.x,mousePosition.y);
+        context.moveTo(mousePosition.x,mousePosition.y);
+        updateMousePosition(event);
+        context.lineTo(mousePosition.x,mousePosition.y);
+        context.stroke();
+        context.closePath();
+
+        if (recording) {
+            if (pointsAndTimes.length == 0) {
+                start = Date.now(); 
+            }
+            var x = parseInt(mousePosition.x);
+            var y = mousePosition.y;
+            var mapX = null;
+            var t = timeInterval = Date.now() - start; 
+            var lineColor = '#57FFEE';
+
+            pointsAndTimes.push({
+                'x': x,
+                'y': y,
+                't': timeInterval,
+                'color' : lineColor, 
+                'mapX' : mapX
+            });
+        }
+    });
+
+     //On mousedown over Play, play back the animation from beginning
+    playButton.addEventListener('mousedown', function (event) {
+        // If nothing has been drawn show an alert
+        if (pointsAndTimes.length == 0) {
+            document.getElementById("alertbox").style.visibility = "visible";
+        } else {
+            document.getElementById("alertbox").style.visibility = "hidden";
+        }
+
+        if (recording) {
+            recording = false;
+            recButton.value = "Record";
+            recButton.innerHTML = "Record";
+        }
+
+        context.clearRect(0,0,cnv.clientWidth, cnv.clientHeight);
+        draw();
+        pointsAndTimes.forEach(function(pt) {
+            var x = pt.x;
+            var y = pt.y;
+            var t = pt.t * 2;
+            setTimeout(function timeoutFunc() {
+                var path = new Path2D();
+                path.arc(x, y, 10, 0, 2 * Math.PI, true);
+                context.fill(path);
+            }, t);
+        });
+    })
+
+    // Clear the canvas, and the points array if recording
+    clearButton.addEventListener('mousedown', function(event) {
+        context.clearRect(0,0,cnv.clientWidth,cnv.clientHeight);
+        pointsAndTimes = [];
+        recording = false;
+        drawing = false; 
+        document.getElementById("alertbox").style.visibility = "hidden";
+        draw();
+    });
+
+    //On mousedown over Send, create the array object and ask the user for confirm, then send to Tessel queue
+    sendButton.addEventListener('mousedown', function(event) {
+        if (pointsAndTimes == 0) {
+            alert('You don\'t have any data to send');
+        } else {
+            var quantizedPoints = pointsAndTimes.map(function(pt) {
+                //create new object for da points
+               var rObj = {};
+                //noralize points from 0 to 1
+               var x = Math.floor((pt.x/width) * 8);
+               var y = Math.floor((pt.y/height) * 8);
+               var t = pt.t;
+               rObj.x = x;
+               rObj.y = y;
+               rObj.t = t;
+               
+               return rObj;
+            });
+            //switch this over when time allows
+        }
+    });
+
+            // Scale the image so that it plays across the maximum pixels
+            // pointsAndTimes.forEach(function(pt) {
+            //     pointsAndTimes.max = function(pointsAndTimes) {
+            //         console.log(Math.max.apply(Math,pointsAndTimes.x));
+            //     }
+             // });
+    //     }
+    // })   
+
+</script>
+<script>
+    var port = 8000;
+
+    var local =  'localhost';
+    var tessel = '192.168.0.70';
+
+    var buffer = new Buffer(64*3);
+    buffer.write(quantizedPoints,'utf-8');
+    console.log(buffer);
+    // INSERT TESSEL IP ADDRESS HERE. Always prepend with 'ws://' to indicate websocket
+    var connection = ws.connect('ws://' + tessel + ':' + port, function() {
+      // When we connect to the server, send some catchy text
+      connection.send(JSON.stringify(buffer));
+    }); 
+</script>
+
+<!--   // Create a new websocket connection to Tessel
+  // Put your IP Address here
+  // var exampleSocket = new WebSocket("ws://192.168.0.70:8081");
+
+  // // We'll be flipping the state
+  // var state = true;
+
+  // // Every five seconds
+  // setInterval(function() {
+  //   // Construct a packet
+  //   var test = new Buffer(64 * 3);
+  //   // Send it over the websocket
+  //   exampleSocket.send(JSON.stringify(packet));
+  //   // Change the state var
+  //   state = !state
+
+  // }, 5000); -->
+  
+
+
+
+</body>
+
+</html>
