@@ -1,22 +1,24 @@
 {
-  "name": "tessel-webserver-demo",
-  "version": "1.0.1",
-  "description": "Loading files from a Tessel web server over HTTP and websockets",
-  "main": "app.js",
+  "name": "BlinkyCube-v2",
+  "version": "0.0.0",
+  "description": "tessel Webserver Demo",
+  "main": "index.js",
   "dependencies": {
+    "express": "^4.14.0",
+    "express-static": "^1.2.5",
     "nodejs-websocket": "^1.0.0",
+    "tessel": "^0.3.25",
     "tiny-router": "^0.1.3"
   },
   "devDependencies": {},
   "scripts": {
+    "start": "node app.js"
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": "https://github.com/adebigare/BlinkyCube-v2.git",
   "keywords": [
-    "tessel",
-    "web",
-    "websocket",
-    "static"
+    "Tessel"
   ],
-  "author": "Jon McKay <jon@technical.io>",
-  "license": "MIT"
+  "license": "MIT",
+  "readme": "A bare bones Tessel 2 blinky script."
 }

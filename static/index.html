@@ -102,7 +102,7 @@
  -->            <div id="alertbox"><p>You haven't made a recording yet! Click Record to start.</p></div>
             <canvas id="canvas" width="600" height="600"></canvas>
         </div>
-        <div id="data">Hello I'm the data!</div>
+        <!-- <div id="data">Hello I'm the data!</div> -->
     </div>
 
         
@@ -286,76 +286,33 @@
         if (pointsAndTimes == 0) {
             alert('You don\'t have any data to send');
         } else {
+            var rObj = [];
             var quantizedPoints = pointsAndTimes.map(function(pt) {
                 //create new object for da points
-               var rObj = [];
                 //noralize points from 0 to 1
-               var x = Math.floor((pt.x/width) * 8);
-               var y = Math.floor((pt.y/height) * 8);
-               var t = pt.t;
-               rObj.x = x;
-               rObj.y = y;
-               rObj.t = t;
-               
-               console.log(rObj);
-               document.write(rObj);
-               return rObj;
+                var x = (pt.x/width);
+                var y = (pt.y/height);
+                var t = pt.t;
+                rObj.x = x;
+                rObj.y = y;
+                rObj.t = t;
+                rObj.push({x,y,t});
+                pointsAndTimes = rObj;
+                return pointsAndTimes;
 
             });
-            var array = document.getElementById('data').innerHTML = 'hello';
-            // JSON.stringify(quantizedPoints);
-            //switch this over when time allows
-
-        }
-    });
 
             // Scale the image so that it plays across the maximum pixels
             // pointsAndTimes.forEach(function(pt) {
             //     pointsAndTimes.max = function(pointsAndTimes) {
-            //         console.log(Math.max.apply(Math,pointsAndTimes.x));
+            //        return console.log(Math.max.apply(Math,pointsAndTimes.x));
             //     }
-             // });
-    //     }
-    // })   
+            //  });
+        }
+    });
 
 </script>
-<script>
-    var port = 8000;
-
-    var local =  'localhost';
-    var tessel = '192.168.1.101';
-
-    var buffer = new Buffer(64*3);
-    buffer.write(quantizedPoints,'utf-8');
-    console.log(buffer);
-    // INSERT TESSEL IP ADDRESS HERE. Always prepend with 'ws://' to indicate websocket
-    var connection = ws.connect('ws://' + tessel + ':' + port, function() {
-      // When we connect to the server, send some catchy text
-      connection.send(JSON.stringify(buffer));
-    }); 
-</script>
-
-<!--   // Create a new websocket connection to Tessel
-  // Put your IP Address here
-  // var exampleSocket = new WebSocket("ws://192.168.0.70:8081");
-
-  // // We'll be flipping the state
-  // var state = true;
-
-  // // Every five seconds
-  // setInterval(function() {
-  //   // Construct a packet
-  //   var test = new Buffer(64 * 3);
-  //   // Send it over the websocket
-  //   exampleSocket.send(JSON.stringify(packet));
-  //   // Change the state var
-  //   state = !state
-
-  // }, 5000); -->
   
-
-
-
 </body>
 
 </html>
