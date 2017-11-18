@@ -1,18 +1,29 @@
+// Need function to map over cuubeMe and change colors for kicks
+// or index into cuube with coordinates from blinkycube editor
+
 /* global THREE */
 
+// scene size
+var WIDTH = window.innerWidth;
+var HEIGHT = window.innerHeight;
+// camera
+var VIEW_ANGLE = 45;
+var ASPECT = WIDTH / HEIGHT;
+var NEAR = 1;
+var FAR = 500;
 
-// const cubespace = [2,2,2];
+//objects
 const cubespace = [8,8,8];
 const cubeDims = [8,8,8];
 var spacing = 10;
-var far = 500;
-var near = .005;
-var cameraControls;
 var colorArray = [];
 
 window.wobble = true;
 window.hypercube = new THREE.Object3D();
+
+var camera, scene, renderer;
 var clock = new THREE.Clock();
+var cameraControls;
 
 // create cubespace
 const cuube = new Array(cubespace[0]).fill(
@@ -33,136 +44,118 @@ const closure = function(cb){
 	}
 };
 
-// Need function to map over cuubeMe and change colors for kicks
-// or index into cuube with coordinates from blinkycube editor
-const colorChange = function(){
 
-	var randomColor = new THREE.Color();
-
-	randomColor = colorArray[Math.random() * colorArray.length | 0];
-	return randomColor;
-}
-
-
-const buildScene = function (scene) {
-	const geometry = new THREE.CubeGeometry(...cubeDims);
-	const translate = new THREE.Vector3(1,1,1);
-	
-	scene.add(hypercube);
-	//move the cube towards the center of the canvas
-	hypercube.translateOnAxis(translate, -8);
-
-	
-	// create and index the materials, add meshes to hypercube
-	closure(function(x,y,z){
-	  // every cube 
-	  cuube[x,y,z] = new THREE.MeshLambertMaterial({
-		color: colorChange(), 
-		transparent: true,
-		opacity: 0.7
-	  });
-	  const cube = new THREE.Mesh(geometry, cuube[x,y,z]);
-	  
-
-	  // move cubes based on dimensions and some spacing
-	  cube.position.set(
-		x * (cubeDims[0] + spacing),
-		y * (cubeDims[1] + spacing),
-		z * (cubeDims[2] + spacing)
-	  );
-
-	  hypercube.add(cube);
-	});
-
-	// array of materials
-	window.cuubeMe = [];
-	closure((x,y,z) => cuubeMe.push(cuube[x,y,z]));
-
-
-};
-
-// function update() {
-// 				requestAnimationFrame( update );
-// 				var delta = clock.getDelta();
-// 				var timer = Date.now() * 0.01;
-// 				hypercube.position.set(
-// 					Math.cos( timer * 0.1 ) * 30,
-// 					Math.abs( Math.cos( timer * 0.2 ) ) * 20 + 5,
-// 					Math.sin( timer * 0.1 ) * 30
-// 				);
-// 				hypercube.rotation.y = ( Math.PI / 2 ) - timer * 0.1;
-// 				hypercube.rotation.z = timer * 0.8;
-// 				nue();
-// 			}
-
-
-var nue = (function() {
+var init = function() {
 	'use strict';
 
 	//Scene
-	var scene = new THREE.Scene();
+	scene = new THREE.Scene();
 
-	//render
-	var renderer = new THREE.WebGLRenderer();
-	renderer.setSize(window.innerWidth, window.innerHeight);
+	//Render
+	renderer = new THREE.WebGLRenderer();
+	renderer.setSize(WIDTH, HEIGHT);
 	document.body.appendChild(renderer.domElement);
 
-	//Camera 
-	var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, near, far);
+	//Camera
+	camera = new THREE.PerspectiveCamera(75, WIDTH / HEIGHT, NEAR, FAR);
 	camera.position.set( 0, 75, 160 );
+	//z is for zooooom bitch!
+	camera.position.z = 300;
+
 	cameraControls = new THREE.OrbitControls(camera, renderer.domElement);
 	cameraControls.target.set( 0, 40, 0);
 	cameraControls.maxDistance = 400;
 	cameraControls.minDistance = 10;
 	cameraControls.update();
 
+	buildScene();
+};
+
+const buildScene = function () {
+
+	const geometry = new THREE.CubeGeometry(...cubeDims);
+	const translate = new THREE.Vector3(1,1,1);
+
+	// build the epi-cube
+	scene.add(hypercube);
+	//move the cube towards the center of the canvas
+	hypercube.translateOnAxis(translate, -8);
+
+	//find random color from JSON file
+	let randomColor = new THREE.Color();
+	const colorChange = function(){
+		randomColor = colorArray[Math.random() * colorArray.length | 0];
+		return randomColor;
+	}
 	// load colors
-	var loader = new THREE.FileLoader();
-	
+	const loader = new THREE.FileLoader();
 	var loaderCallback = function(colors) {
 		var color = JSON.parse(colors);
-
 		for(var x in color) {
 			colorArray.push(color[x].hex);
-		} 
-		buildScene(scene); 
-	}
+		}
 
-	// load a resource
+		// create and index the materials, add meshes to hypercube
+		closure(function(x,y,z){
+			// every cube
+			cuube[x,y,z] = new THREE.MeshLambertMaterial({
+				color: colorChange(),
+				transparent: true,
+				opacity: 0.7
+			});
+			const cube = new THREE.Mesh(geometry, cuube[x,y,z]);
+
+			// move cubes based on dimensions and some spacing
+			cube.position.set(
+				x * (cubeDims[0] + spacing),
+				y * (cubeDims[1] + spacing),
+				z * (cubeDims[2] + spacing)
+			);
+			hypercube.add(cube);
+		});
+	}
 	loader.load('colors.json', loaderCallback);
 
-	// Lighting 
-	//z is for zooooom bitch! 
-	camera.position.z = 300;
-	
+	// array of materials
+	window.cuubeMe = [];
+	closure((x,y,z) => cuubeMe.push(cuube[x,y,z]));
+
+	// Lighting
 	var pointLight = new THREE.PointLight(0xFFFFFF);
+		pointLight.position.set(10,50,130);
+		scene.add(pointLight);
 
-	pointLight.position.x = 10;
-	pointLight.position.y = 50;
-	pointLight.position.z = 130;
+	var light = new THREE.AmbientLight( 0x404040, 0.6 ); // soft white light
+		scene.add( light );
+};
 
-	scene.add(pointLight);
+var render = function() {
+	renderer.render(scene, camera);
+}
 
-
-
+var update = function() {
 	var reqAnimFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.msRequestAnimationFrame;
+	reqAnimFrame(update);
 
-	var render = function() {
-		reqAnimFrame(render);
-		
-		if (wobble) {
-		  var delta = Math.random() * (0.04 - 0.02) + 0.005;
-		 
-		  hypercube.rotation.x += delta;
-		  hypercube.rotation.y += delta;
-		  hypercube.rotation.z -= delta;
-		} //no rotate for you?
+	let delta = clock.getDelta() * (0.04 - 0.02) + 0.005;
+	var timer = Date.now() * 0.01;
 
-		renderer.render(scene, camera);
-	};
+	if (wobble) {
+		hypercube.rotation.x += delta;
+		hypercube.rotation.y += delta;
+		hypercube.rotation.z -= delta;
 
+		hypercube.position.set(
+			Math.cos( timer * 0.1 ) * 30,
+			Math.abs( Math.cos( timer * 0.2 ) ) * 20 + 5,
+			Math.sin( timer * 0.1 ) * 30
+		);
+		hypercube.rotation.y = ( Math.PI / 2 ) - timer * 0.1;
+		// hypercube.rotation.z = timer * 0.8;
+	}
 	render();
+}
 
-});
-
-nue();
+init();
+buildScene();
+update();
